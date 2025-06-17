@@ -1,0 +1,245 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- ───── Side galleries (3 left, 3 right) ───── -->
+<div class="side-gallery left">
+  <!-- side 1  – widget -->
+  <iframe
+    src="https://widgetbox.app/embed/calendar/simple/0b65164c-7dac-4389-8a10-4b4ceebf9f1d"
+    style="width:240px;height:300px;"
+    loading="lazy"></iframe>
+
+  <!-- side 2  – widget -->
+  <img src="{{ url_for('static', filename='side01.jpg') }}"
+       style="width:240px;border-radius:16px;box-shadow:var(--shadow-card)"
+       alt="">
+
+  <!-- side 3  – image -->
+  <img src="{{ url_for('static', filename='side02.jpg') }}"
+       style="width:240px;object-fit:cover;border-radius:16px;box-shadow:var(--shadow-card)"
+       alt="">
+</div>
+
+<div class="side-gallery right">
+  <!-- side 4  – widget -->
+  <iframe
+    src="https://widgetbox.app/embed/clock/digital/5444ec61-69ad-4e87-807a-eab7464fdcbf"
+    style="width:240px;height:200px;"
+    loading="lazy"
+    scrolling="no"></iframe>
+
+  <!-- side 5  – widget -->
+  <img src="{{ url_for('static', filename='side03.jpg') }}"
+       style="width:240px;object-fit:cover;border-radius:16px;box-shadow:var(--shadow-card)"
+       alt="">
+
+  <!-- side 6  – image -->
+  <img src="{{ url_for('static', filename='side.05.jpg') }}"
+       style="width:240px;object-fit:cover;border-radius:16px;box-shadow:var(--shadow-card)"
+       alt="">
+</div>
+
+<!-- ───── Main dashboard ───── -->
+<div class="dashboard-wrapper">
+
+  <!-- Greeting -->
+  <h1 class="mb-1">{{ greet }}</h1>
+  <p class="text-muted mb-3">{{ today_str }}</p>
+
+  <!-- Progress rings -->
+  <div class="d-flex gap-4 mb-3 flex-wrap">
+    <div class="text-center">
+      <canvas id="weekRing" width="120" height="120"></canvas>
+      <p class="mt-1 mb-0 small fw-semibold">Week- {{ week_display }}</p>
+    </div>
+    <div class="text-center">
+      <canvas id="monthRing" width="120" height="120"></canvas>
+      <p class="mt-1 mb-0 small fw-semibold">{{ week_dates[0].strftime('%B')}} </p>
+    </div>
+  </div>
+
+  <!-- Week table -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <a href="{{ url_for('index', week=week_offset-1, offset=heat_offset) }}"
+         class="btn btn-sm btn-light px-2">←</a>
+      <strong>Week {{ week_display }} – {{ year_display }}</strong>
+      {% if week_offset < 0 %}
+      <a href="{{ url_for('index', week=week_offset+1, offset=heat_offset) }}"
+         class="btn btn-sm btn-light px-2">→</a>
+      {% else %}<span style="width:32px;"></span>{% endif %}
+    </div>
+
+    <div class="card-body p-2">
+      <table class="table table-sm mb-0 align-middle text-center">
+        <thead class="small">
+          <tr>
+            <th class="text-start">Habit</th>
+            {% for d in week_dates %}
+            <th {% if d==today %}class="table-success"{% endif %}>{{ d.strftime('%a %d') }}</th>
+            {% endfor %}
+            <th>Cur</th><th>Max</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for habit, vals in habits.items() %}
+          <tr>
+            <td class="text-start">{{ habit }}</td>
+            {% for d in week_dates %}
+            <td>
+              <input type="checkbox" class="habit-cb"
+                     data-habit="{{ habit }}"
+                     data-day="{{ loop.index0 }}"
+                     data-year="{{ year_display }}"
+                     data-week="{{ week_display }}"
+                     {% if vals[loop.index0] %}checked{% endif %}
+                     {% if d>today %}disabled{% endif %}/>
+            </td>
+            {% endfor %}
+            <td><span class="badge-streak badge-cur">{{ current_streaks[habit] }}</span></td>
+            <td><span class="badge-streak badge-best">{{ best_streaks[habit] }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Charts row -->
+  <div class="row g-3">
+
+    <!-- Weekly % bar chart -->
+    <div class="col-lg-7">
+      <div class="card h-100">
+        <div class="card-header py-1 d-flex justify-content-between align-items-center">
+          <a href="{{ url_for('index', week=week_offset-1, offset=heat_offset) }}"
+             class="btn btn-sm btn-light px-2">←</a>
+          About this week
+          {% if week_offset < 0 %}
+          <a href="{{ url_for('index', week=week_offset+1, offset=heat_offset) }}"
+             class="btn btn-sm btn-light px-2">→</a>
+          {% else %}<span style="width:34px;"></span>{% endif %}
+        </div>
+        <div class="card-body p-2"><canvas id="completionChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- 42‑day heat‑map -->
+    <div class="col-lg-5">
+      <div class="card h-100">
+        <div class="card-header py-1 d-flex justify-content-between align-items-center">
+          <a href="{{ url_for('index', offset=heat_offset+42, week=week_offset) }}"
+             class="btn btn-sm btn-light px-2">←</a>
+          <span> {{ heatmap_label }}</span>
+          {% if heat_offset >= 42 %}
+          <a href="{{ url_for('index', offset=heat_offset-42, week=week_offset) }}"
+             class="btn btn-sm btn-light px-2 ms-1">→</a>
+          {% else %}<span style="width:34px;"></span>{% endif %}
+        </div>
+        <div class="card-body p-2" style="position:relative;height:260px">
+          <canvas id="heatmapChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.row -->
+
+
+
+</div><!-- /.dashboard-wrapper -->
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@3.0.0/dist/chartjs-chart-matrix.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+
+  /* Checkbox AJAX */
+  document.querySelectorAll('.habit-cb').forEach(cb=>{
+    cb.addEventListener('change',e=>{
+      fetch('{{ url_for("update_habit") }}',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          habit : e.target.dataset.habit,
+          day   : e.target.dataset.day,
+          status: e.target.checked ? 1 : 0,
+          year  : e.target.dataset.year,
+          week  : e.target.dataset.week
+        })
+      }).then(()=>location.reload());
+    });
+  });
+
+ /* Progress rings */
+function ring(id, pct) {
+  const root = getComputedStyle(document.documentElement);
+  new Chart(document.getElementById(id), {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [pct, 100 - pct],
+        backgroundColor: [
+          root.getPropertyValue('--clr-green'),
+          root.getPropertyValue('--clr-green-lt')
+        ],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      cutout: '75%',
+      plugins: {
+        tooltip: { enabled: false },
+        legend: { display: false },
+        datalabels: {
+          display: true,
+          anchor: 'center',
+          align: 'center',
+          formatter: (_, context) => context.dataIndex === 0 ? pct + '%' : '',
+          color: root.getPropertyValue('--clr-text'),
+          font: { weight: 700, size: 18 }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+ring('weekRing', {{ week_percent }});
+ring('monthRing', {{ month_percent }});
+
+
+  /* Weekly bar chart */
+  new Chart(document.getElementById('completionChart'),{
+    type:'bar',plugins:[ChartDataLabels],
+    data:{labels:[{% for h in habits %}'{{ h }}'{% if not loop.last %},{% endif %}{% endfor %}],
+          datasets:[{data:[{% for v in completion_rates.values() %}{{ v }}{% if not loop.last %},{% endif %}{% endfor %}],
+                     backgroundColor:getComputedStyle(document.documentElement).getPropertyValue('--clr-green').trim()}]},
+    options:{scales:{y:{beginAtZero:true,max:100}},plugins:{legend:{display:false},
+      datalabels:{anchor:'end',align:'top',
+        color:getComputedStyle(document.documentElement).getPropertyValue('--clr-text').trim(),
+        font:{weight:'bold'},formatter:v=>v+'%'}},maintainAspectRatio:false}
+  });
+
+  /* 42‑day heat‑map */
+  const pts={{ heatmap_points|tojson }};
+  const max=Math.max(...pts.map(p=>p.v),1);
+  new Chart(document.getElementById('heatmapChart'),{
+    type:'matrix',
+    data:{datasets:[{data:pts,width:()=>16,height:()=>16,borderWidth:0,
+      backgroundColor:c=>{const f=c.raw.v/max;const l=90-55*f;const s=50+10*f;
+        return `hsl(120 ${s}% ${l}%)`;}}]},
+    options:{parsing:{xAxisKey:'x',yAxisKey:'y',weightKey:'v'},maintainAspectRatio:false,
+      scales:{x:{display:false},
+              y:{reverse:true,ticks:{callback:i=>['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i]},
+                 grid:{display:false}}},
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>`${c.raw.label}: ${c.raw.v}`}}}}
+  });
+
+});
+</script>
+{% endblock %}

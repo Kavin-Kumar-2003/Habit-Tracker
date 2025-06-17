@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4>Add New Habit</h4>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+                
+                <form method="post">
+                    <div class="mb-3">
+                        <label for="habit_name" class="form-label">Habit Name</label>
+                        <input type="text" class="form-control" id="habit_name" name="habit_name" required>
+                        <div class="form-text">Enter a clear, specific habit you want to track</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Habit</button>
+                    <a href="/" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
