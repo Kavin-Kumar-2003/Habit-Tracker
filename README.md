@@ -2,6 +2,7 @@
 
 A minimal, fast, and user-friendly habit tracking app – no installation or account needed.  
 Just run `HabitTracker.exe` and stay on top of your goals.
+
 ---
 
 # 📥 [⬇️ Download HabitTracker.exe](https://github.com/Kavin-Kumar-2003/Habit-Tracker/releases/download/v1.0/HabitTracker.exe)
